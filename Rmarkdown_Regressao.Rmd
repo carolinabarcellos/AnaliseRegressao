@@ -1,0 +1,37 @@
+---
+title: "AnaliseRegressao"
+output: html_document
+date: "2025-11-10"
+---
+# **Introdução**
+
+Esse trabalho consiste em analisar o tempo total de sono dos mamíferos, buscando compreender o que explica tal variável. 
+Portanto, guiaremos nosso projeto pelas seguintes informações:
+
+* **Variável resposta (Y):** `total_sleep` (Horas totais de sono)
+* **Variáveis Explicativas (X):**
+    * `danger` (Índice de perigo)
+    * `body_wt` (Peso corporal)
+    * `life_span` (Expectativa de vida)
+    * `gestation` (Tempo de gestação)
+    
+```{r setup-e-carga}
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+mammals <- read_csv("dataset/mammals.csv")
+
+```
+```{r limpeza}
+mammals_clean <- mammals %>%
+  drop_na(total_sleep, dreaming, non_dreaming, danger, body_wt, life_span, gestation)
+
+```
+
+```{r}
+summary(mammals_clean)
+```
+

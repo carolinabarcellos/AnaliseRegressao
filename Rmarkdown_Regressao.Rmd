@@ -47,9 +47,11 @@ Portanto, guiaremos nosso projeto pelas seguintes informações:
 ```{r setup-e-carga}
 
 install.packages("readr")
+install.packages("car")
 install.packages("dplyr")
 install.packages("ggplot2")
 install.packages("tidyr")
+library(car)
 library(readr)
 library(dplyr)
 library(ggplot2)
@@ -62,7 +64,163 @@ mammals_clean <- mammals %>%
   drop_na(species, body_wt, brain_wt, non_dreaming, dreaming, 
           total_sleep, life_span, gestation, predation, exposure, danger)
 ```
+---
+# Estatísticas descritivas
 
 ```{r}
 summary(mammals)
 ```
+---
+# Testando se há correlação entre as variáveis explicativas (Indício de Multicolinearidade)
+
+```{r}
+#Testando se há correlação linear entre as variáveis body_wt e brain_wt
+cor.test(mammals_clean$body_wt, mammals_clean$brain_wt, method = "pearson")
+
+```
+```{r}
+#Testando se há correlação linear entre as variáveis exposure e danger
+cor.test(mammals_clean$exposure, mammals_clean$danger, method = "pearson")
+```
+```{r}
+#Testando se há correlação linear entre as variáveis dreaming e non_dreaming
+cor.test(mammals_clean$dreaming, mammals_clean$non_dreaming, method = "pearson")
+```
+```{r}
+#Testando se há correlação linear entre as variáveis predation e exposure
+cor.test(mammals_clean$predation, mammals_clean$exposure, method = "pearson")
+```
+```{r}
+#Testando se há correlação linear entre as variáveis predation e danger
+cor.test(mammals_clean$predation, mammals_clean$danger, method = "pearson")
+```
+---
+# Correlação entre a variável resposta e cada variável independente.
+
+```{r}
+#Testando se há correlação linear entre as variáveis total_sleep e danger
+cor.test(mammals_clean$total_sleep, mammals_clean$danger, method = "pearson")
+```
+```{r}
+#Testando se há correlação linear entre as variáveis total_sleep e exposure
+cor.test(mammals_clean$total_sleep, mammals_clean$exposure, method = "pearson")
+```
+```{r}
+#Testando se há correlação linear entre as variáveis total_sleep e dreaming
+cor.test(mammals_clean$total_sleep, mammals_clean$dreaming, method = "pearson")
+```
+```{r}
+#Testando se há correlação linear entre as variáveis total_sleep e non_dreaming
+cor.test(mammals_clean$total_sleep, mammals_clean$non_dreaming, method = "pearson")
+```
+
+```{r}
+#Testando se há correlação linear entre as variáveis total_sleep e body_wt
+cor.test(mammals_clean$total_sleep, mammals_clean$body_wt, method = "pearson")
+```
+```{r}
+#Testando se há correlação linear entre as variáveis total_sleep e brain_wt
+cor.test(mammals_clean$total_sleep, mammals_clean$brain_wt, method = "pearson")
+```
+
+
+```{r}
+#Testando se há correlação linear entre as variáveis total_sleep e predation
+cor.test(mammals_clean$total_sleep, mammals_clean$predation, method = "pearson")
+```
+
+
+```{r}
+#Testando se há correlação linear entre as variáveis total_sleep e life_span
+cor.test(mammals_clean$total_sleep, mammals_clean$life_span, method = "pearson")
+```
+
+```{r}
+#Testando se há correlação linear entre as variáveis total_sleep e gestation
+cor.test(mammals_clean$total_sleep, mammals_clean$gestation, method = "pearson")
+```
+#Heatmap de correlação
+```{r}
+library(corrplot)
+
+cor_matrix <- cor(mammals_clean |> select(-species), use = "complete.obs")
+
+corrplot(
+  cor_matrix,
+  method = "color",
+  type = "upper",
+  tl.col = "black",
+  addCoef.col = NULL,  
+  number.cex = 0,    
+  cl.pos = "r"          
+)
+```
+---
+# Histogramas das variáveis numéricas
+```{r}
+numeric_vars <- mammals_clean |> dplyr::select(-species)
+
+for(col in names(numeric_vars)){
+  print(
+    ggplot(mammals_clean, aes_string(col)) +
+      geom_histogram(bins = 20) +
+      ggtitle(paste("Histograma de", col))
+  )
+}
+```
+---
+# Boxplot das variáveis numéricas para ver outliers
+```{r}
+for(col in names(numeric_vars)){
+  print(
+    ggplot(mammals_clean, aes(y = .data[[col]])) +
+      geom_boxplot() +
+      ggtitle(paste("Boxplot de", col))
+  )
+}
+```
+---
+# Regressão Linear Múltipla
+
+Como dreaming e non_dreaming são perfeitas preditoras de total_sleep, iremos retirá-las para geração do modelo.
+
+```{r}
+model_full <- lm(total_sleep ~ body_wt + brain_wt + life_span +
+                   gestation + predation + exposure + danger, 
+                 data = mammals_clean)
+summary(model_full)
+```
+
+
+```{r}
+library(car)
+vif(model_full)
+```
+A partir da análise dos VIFs percebemos que danger, predation,brain_wt e body_wt possuem VIFs muito altos (>10), o que indica fortes sinais de multicolinearidade problemática no modelo. Portanto, iremos remover a variável com maior VIF (brain_wt) e testar o modelo novamente.
+
+```{r}
+model2 <- lm(total_sleep ~ body_wt + life_span +
+                   gestation + predation + exposure + danger, 
+                 data = mammals_clean)
+summary(model2)
+```
+```{r}
+vif(model2)
+```
+
+Os VIFs diminuiram significativamente, mas ainda estão altos para as
+variáveis predation e danger. Iremos excluir danger e ver como o modelo
+se ajusta
+
+```{r}
+model3 <- lm(total_sleep ~ body_wt + life_span +
+                   gestation + predation + exposure, 
+                 data = mammals_clean)
+summary(model3)
+```
+
+```{r}
+vif(model3)
+```
+
+Agora os VIFs diminuiram significativamente e todos estão abaixo de 5, mas o R2 ajustado também diminuiu, o que não é um bom sinal.

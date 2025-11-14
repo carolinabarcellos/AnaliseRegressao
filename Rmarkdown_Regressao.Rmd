@@ -196,7 +196,7 @@ summary(model_full)
 library(car)
 vif(model_full)
 ```
-A partir da análise dos VIFs percebemos que danger, predation,brain_wt e body_wt possuem VIFs muito altos (>10), o que indica fortes sinais de multicolinearidade problemática no modelo. Portanto, iremos remover a variável com maior VIF (brain_wt) e testar o modelo novamente.
+A partir da análise dos VIFs percebemos que danger, predation,brain_wt e body_wt possuem VIFs muito altos (>10), o que indica fortes sinais de multicolinearidade problemática no modelo. Portanto, iremos remover a variável com maior VIF (brain_wt), ajustar e testar o modelo novamente.
 
 ```{r}
 model2 <- lm(total_sleep ~ body_wt + life_span +
@@ -210,7 +210,7 @@ vif(model2)
 
 Os VIFs diminuiram significativamente, mas ainda estão altos para as
 variáveis predation e danger. Iremos excluir danger e ver como o modelo
-se ajusta
+se ajusta.
 
 ```{r}
 model3 <- lm(total_sleep ~ body_wt + life_span +

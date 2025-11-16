@@ -1,9 +1,12 @@
 ---
-title: "Analise de Regressao: Sono em Mamiferos"
+title: "Análise de Regressão: Sono em Mamíferos"
 output: html_document
-date: "2025-11-10"
+date: "16-11-2025"
 ---
-# 📚 Introdução
+# Membros do Grupo
+Carolina Penido Barcellos, Gabrielly Xavier dos Santos e Matheus Soares dos Santos de Freitas.
+
+# Introdução
 Este trabalho consiste em analisar o **tempo total de sono dos mamíferos** (`total_sleep`), buscando compreender quais variáveis biológicas e comportamentais explicam essa característica.
 
 * **Variável Resposta (Y):** `total_sleep` (Horas totais de sono por dia).
@@ -45,7 +48,7 @@ mammals_clean <- mammals %>%
 ```{r}
 summary(mammals)
 ```
-Dado que estamso tratando de regressão, é desejável que nossa variável resposta siga a distribuição normal, dado que isso aumentari as chances dos nossos erros também serem normais. Portanto, é válido, começar analisando isso.
+Dado que estamso tratando de regressão, é desejável que nossa variável resposta siga a distribuição normal, dado que isso aumentaria as chances dos nossos erros também serem normais. Portanto, é válido, começar analisando isso.
 ```{r}
 print(
     ggplot(mammals_clean, aes_string('total_sleep')) +
@@ -207,7 +210,9 @@ vif(model3)
 Agora os VIFs diminuiram significativamente e todos estão abaixo de 5, mas o R2 ajustado também diminuiu ( caindo de **0.58**, para **0.47**), o que não é um bom sinal.
 
 Tendo tal resultado em mente, vamso tetar modelos mais robustos para escolher as nossas variáveis.
-## * **StepWise:** usa uma métrica chamada AIC (Critério de Informação de Akaike) para decidir quais variáveis ficam e quais saem do modelo.
+
+# StepWise
+Usa uma métrica chamada AIC (Critério de Informação de Akaike) para decidir quais variáveis ficam e quais saem do modelo. Quanto menor o AIC, melhor.
 
 ```{r stepwise-selection}
 # Começamos com o modelo completo que você já criou
@@ -231,10 +236,22 @@ print(vif_stepwise)
 ```
 
 
-## **Conclusão StepWise:** Ainda que o R^2 ajustado do modelo tenha melhorado, inicialmente, o método em questao não tratou a multicolinearidade, visto que ele foi contruído para se "preocupar" com com AIC do modleo, e não com o VIF. para tirar as dúvidas de qual o melhor modelo, rodamos uma versão final do stepwise, retiando a variavel `danger` que antes estava com maior VIF, obtendo um R^2 ajustado de **0.48** (veremos logo em seguida que o LASSO foi melhor).
+# Conclusão StepWise 
+Ainda que o R^2 ajustado do modelo tenha melhorado, inicialmente, o método em questao não tratou a multicolinearidade, visto que ele foi contruído para se "preocupar" com com AIC do modleo, e não com o VIF. para tirar as dúvidas de qual o melhor modelo, rodamos uma versão final do stepwise, retiando a variavel `danger` que antes estava com maior VIF, obtendo um R^2 ajustado de **0.48** (veremos logo em seguida que o LASSO foi melhor).
 
 
-## * **LASSO:** é considerado um método mais moderno e robusto para fazer seleção de variáveis, especialmente quando temos multicolinearidade. Além disso, esse método funciona penalizndo os coeficientes, utilizando um certo *alpha*. Para escolher o melhor parâmetro, utilizamos **Validação Cruzada**.
+# LASSO
+É considerado um método mais moderno e robusto para fazer seleção de variáveis, especialmente quando temos multicolinearidade. Além disso, esse método funciona penalizando os coeficientes, utilizando um certo *alpha*. Para escolher o melhor parâmetro, utilizamos **Validação Cruzada**.
+
+Relembrando LASSO:
+A Regressão LASSO (Least Absolute Shrinkage and Selection Operator) é uma das técnicas de penalização mais populares. Ela encolhe os coeficientes das variáveis menos importantes em direção a zero. a característica especial do LASSO é que, para um 𝜆suficientemente grande, ele pode encolher os coeficientes de algumas variáveis exatamente para zero, realizando assim a seleção de variáveis de forma automática.
+Ela minimiza a soma dos quadrados dos erros (como na regressão usual), mas com uma restrição adicional:
+
+$$
+\min_{\beta_0, \beta_1, \ldots, \beta_k} \left\{ \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{k} x_{ij}\beta_j\right)^2 + \lambda \sum_{j=1}^{k} |\beta_j| \right\}
+$$
+O parâmetro de penalidade 𝜆 controla a força do encolhimento.
+
 ```{r LASSO}
 library(glmnet)
 
@@ -255,6 +272,7 @@ plot(cv_lasso)
 print("--- Coeficientes do Modelo LASSO ---")
 # Ver os coeficientes no "lambda" (penalidade) ideal
 coef(cv_lasso, s = "lambda.min")
+print(cv_lasso$lambda.min) 
 
 ```
 
@@ -265,10 +283,104 @@ vif(model_final_lasso)
 summary(model_final_lasso)
 ```
 
-## **Conclusão LASSO:** O LASSO produziu um modelo final, `total_sleep ~ gestation + danger`, que é muito mais simples (o que é desejável) e robusto. Além de contar com um R^2 ajustado melhor que os anteriores.
+# Conclusão LASSO
+O LASSO produziu um modelo final, `total_sleep ~ gestation + danger`, que é muito mais simples (o que é desejável) e robusto. Além de contar com um R^2 ajustado melhor que os anteriores.
 
 ```{r modelo ajustado}
 model_final <- model_final_lasso
 
 ```
 
+# Análise de Resíduos
+
+A análise de resíduos é essencial para verificar se o modelo linear ajustado atende aos pressupostos clássicos da regressão: normalidade dos erros, homocedasticidade, independência e ausência de padrões sistemáticos.
+
+# Normal QQ-plot dos Resíduos
+```{r}
+qqPlot(model_final,
+       envelope = 0.95,
+       main = "QQ-Plot com Envelope de 95% de Confiança")
+```
+
+```{r}
+shapiro.test(residuals(model_final)) # p-valor > 0.05
+```
+Tendo esses dados em mente, podemos assumir que os erros seguem uma distribuição Normal.
+
+# Autocorrelação entre os erros - Teste de Durbin-Watson
+
+```{r}
+car::durbinWatsonTest(model_final, max.lag = 1)
+```
+Como o p-valor é menor do que 0.05, rejeitamos H0 e supomos que há correlação entre os erros, mas não muito forte pois a estatística de teste D está próxima de 2.
+
+Relembrando:
+• 𝐷 ≈ 2: Não há autocorrelação.
+• 𝐷 ≈ 0: Autocorrelação positiva.
+• 𝐷 ≈ 4: Autocorrelação negativa.
+ 
+# Resíduos VS Valores Ajustados
+```{r}
+par(mfrow = c(1,1))
+plot(model_final, which = 1)
+```
+A linha forma uma curva.
+→ existe não-linearidade → o modelo linear não está capturando bem a relação.
+
+A largura dos pontos varia ao longo da linha horizontal em y=0.
+→ há indícios de heterocedasticidade.
+
+# Teste de Heterocedasticidade (Breusch-Pagan)
+```{r}
+install.packages("lmtest")
+library(lmtest)
+bptest(model_final)
+```
+O p-valor é menor do que 0.05 , então a um nível de 5% de significância rejeitamos H0 e consideramos que o modelo apresenta heterocedasticidade.
+
+Tendo esses resultados em mente, o ideal é fazermos uma transformação de variáveis.
+
+Uma medida corretiva comum para a não-normalidade e/ou variância não-constante é transformar a variável resposta Y,
+criando uma nova variável Y*.
+
+# Transformação de Box-Cox
+
+```{r}
+install.packages("MASS")
+library(MASS)
+
+#Achando o lambda ideal
+box <- boxcox(model_final, plotit = TRUE)
+lambda <- box$x[which.max(box$y)]
+lambda
+#Transformar y:
+if (abs(lambda) < 1e-6) {
+  y_trans <- log(mammals_clean$total_sleep)
+} else {
+  y_trans <- (mammals_clean$total_sleep^lambda - 1)/lambda
+}
+
+#verificar se o modelo está melhor
+model_box <- lm(y_trans ~ gestation + danger, data = mammals_clean)
+qqPlot(model_box,
+       envelope = 0.95,
+       main = "QQ-Plot com Envelope de 95% de Confiança")
+bptest(model_box)
+dwtest(model_box)
+```
+
+```{r}
+par(mfrow = c(1,1))
+plot(model_box, which = 1)
+```
+```{r}
+shapiro.test(residuals(model_box)) # p-valor > 0.05
+```
+# Conclusão Geral da Transformação Box-Cox
+Heterocedasticidade: RESOLVIDA
+
+Normalidade: ERROS CONTINUAM SEGUINDO DISTRIBUIÇÃO NORMAL
+
+(Transformação Box–Cox ajudou)
+
+Autocorrelação dos resíduos: AINDA PRESENTE

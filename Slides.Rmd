@@ -77,7 +77,6 @@ output:
 
 - Checagem de valores ausentes  
 - Remoção de casos inviáveis  
-- Padronização e tratamento de escalas quando necessário  
 
 <img src="imagens/df_limpeza.png" style="float:center; width:70%; margin-left:15px;" />
 

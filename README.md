@@ -30,6 +30,7 @@ As **variáveis explicativas (X)** incluem:
 
 ## 🧼 1. Limpeza e Preparação dos Dados
 
+Ulizamos a linguagem de programação R.
 Foram removidas observações com valores ausentes e carregadas bibliotecas essenciais como **dplyr**, **ggplot2**, **car**, **readr**, **tidyr** e **corrplot**.
 
 Também foi verificada a distribuição da variável resposta através de um histograma, que revelou comportamento **não normal e multimodal**.

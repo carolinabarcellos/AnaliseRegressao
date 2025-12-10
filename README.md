@@ -2,6 +2,10 @@
 
 Este repositório contém o relatório e o código utilizados para analisar os fatores biológicos e comportamentais que influenciam o **tempo total de sono** (`total_sleep`) em diferentes espécies de mamíferos. O estudo foi conduzido utilizando regressão linear múltipla, técnicas modernas de seleção de variáveis (Stepwise e LASSO), transformações de Box–Cox e validação cruzada.
 
+## 🏷️ Status e Tecnologias
+![Feito em R](https://img.shields.io/badge/R-Feito%20em-%23276DC2?style=flat&logo=R&logoColor=white)
+![Badge Concluído](https://img.shields.io/badge/Status-Conclu%C3%ADdo-brightgreen)
+
 ---
 
 ## 👥 Membros do Grupo
